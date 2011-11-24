@@ -2,11 +2,13 @@ package core;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+
+import flex.messaging.io.SerializationContext;
+import flex.messaging.io.amf.Amf3Output;
 
 public final class Session {
 
@@ -19,7 +21,7 @@ public final class Session {
 	public Session(AsynchronousSocketChannel client) {
 		this.client = client;
 		this.readHandler = new Amf3ReadHandler();
-		this.writeHandler = new WriteHandler();
+		this.writeHandler = new DefaultWriteHandler();
 	}
 	
 	public boolean init() {
@@ -41,24 +43,29 @@ public final class Session {
 	
 	public void remoteCall(String funcName, Object...args) {
 		RPC rpc = new RPC();
+		
 		rpc.setFunctionName(funcName);
 		if (args.length > 0) {
 			rpc.setParameters(args);
 		}
 		
-		ByteBufferOutputStream output = new ByteBufferOutputStream();
-		ObjectOutputStream stream;
+		ByteBufferOutputStream stream = new ByteBufferOutputStream();
+		
+		Amf3Output output = new Amf3Output(new SerializationContext());
+		output.setOutputStream(stream);
+		
 		try {
-			stream = new ObjectOutputStream(output);
-			stream.writeObject(rpc);
-			output.flip();
+			output.writeObject(rpc);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
 		}
 		
+		stream.flip();
+		
 		if (this.client.isOpen()) {
-			this.client.write(output.getBuffer(), this, this.writeHandler);
+			// WritePendingException
+			this.client.write(stream.getBuffer(), this, this.writeHandler);
 		} else {
 			this.close();
 		}
@@ -82,7 +89,7 @@ public final class Session {
 	
 	//
 	
-	private class WriteHandler implements CompletionHandler<Integer, Session> {
+	private class DefaultWriteHandler implements CompletionHandler<Integer, Session> {
 
 		@Override
 		public void completed(Integer result, Session session) {

@@ -2,11 +2,10 @@ package core;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.nio.channels.CompletionHandler;
 
 import flex.messaging.io.SerializationContext;
+import flex.messaging.io.amf.ASObject;
 import flex.messaging.io.amf.Amf3Input;
 
 public class Amf3ReadHandler implements CompletionHandler<Integer, Session> {
@@ -47,8 +46,12 @@ public class Amf3ReadHandler implements CompletionHandler<Integer, Session> {
 			input.mark(0);
 			try {
 				Object o = amf3Input.readObject();
-				
 				RPC rpc = decode(o);
+				
+				if (rpc == null) {
+					continue;
+				}
+				
 				rpc.setSession(session);
 				manager.add(rpc);
 				input.compact();
@@ -64,6 +67,25 @@ public class Amf3ReadHandler implements CompletionHandler<Integer, Session> {
 	}
 	
 	private RPC decode(Object o) {
+		System.out.println(o);
+		if (o instanceof ASObject) {
+			RPC rpc = new RPC();
+			ASObject aso = (ASObject)o;
+			
+			if (aso.containsKey("functionName")) {
+				String functionName = (String)aso.get("functionName");
+				rpc.setFunctionName(functionName);
+			} else {
+				return null;
+			}
+			
+			if (aso.containsKey("params")) {
+				Object[] params = (Object[])aso.get("params");
+				rpc.setParameters(params);
+			}
+			
+			return rpc;
+		}
 		return null;
 	}
 
