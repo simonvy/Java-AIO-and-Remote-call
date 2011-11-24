@@ -9,13 +9,14 @@ import java.util.concurrent.Executors;
 
 public class RPCManager {
 	
+	private class Pair {
+		Object host;
+		Method method;
+	}
+	
 	private Map<String, Pair> rpcs = new HashMap<>();
 	
 	private ConcurrentLinkedQueue<RPC> rpcQueue = new ConcurrentLinkedQueue<>(); 
-	
-	public void add(RPC rpc) {
-		rpcQueue.offer(rpc);
-	}
 	
 	public void registerRPC(String rpcName, Object host, Method method) {
 		Pair p = new Pair();
@@ -23,6 +24,10 @@ public class RPCManager {
 		p.method = method;
 		
 		rpcs.put(rpcName, p);
+	}
+	
+	public void add(RPC rpc) {
+		rpcQueue.offer(rpc);
 	}
 	
 	public void invokeRPC(RPC rpc) {
@@ -40,7 +45,7 @@ public class RPCManager {
 		
 		Pair p = this.rpcs.get(funcName);
 		try {
-			System.out.println("> call " + funcName);
+			System.out.println("> remote call " + funcName + ".");
 			
 			Session session = rpc.getSession();
 			session.lock();
@@ -58,17 +63,12 @@ public class RPCManager {
 		} catch (IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
 			System.err.println("> remote call function " + funcName + " generates error.");
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 
 	public void start() {
 		Executors.defaultThreadFactory().newThread(new RPCHandler(this)).start();
-	}
-	
-	private class Pair {
-		Object host;
-		Method method;
 	}
 	
 	private class RPCHandler implements Runnable {

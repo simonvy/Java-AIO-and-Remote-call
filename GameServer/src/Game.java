@@ -38,7 +38,7 @@ public final class Game {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		} finally {
-			this.server.close();
+			this.server.stop();
 		}
 	}
 }

@@ -47,7 +47,7 @@ public final class Amf3Session extends Session {
 		}
 	}
 	
-	public void proceed() {
+	public void read() {
 		RPCManager manager = Context.instance().get(RPCManager.class);
 		ByteBufferInputStream input = super.getInputStream();
 		
@@ -57,18 +57,17 @@ public final class Amf3Session extends Session {
 				Object o = amf3Input.readObject();
 				RPC rpc = decode(o);
 				
-				if (rpc == null) {
-					continue;
+				if (rpc != null) {
+					rpc.setSession(this);
+					manager.add(rpc);
 				}
 				
-				rpc.setSession(this);
-				manager.add(rpc);
-			//	input.compact();
+				input.compact();
 			} catch (EOFException e) {
 				input.reset();
 				break;
 			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 				close();
 				break;
 			}
@@ -112,18 +111,17 @@ public final class Amf3Session extends Session {
 		public void completed(Integer read, Session session) {
 			if (read == -1) {
 				session.close();
-				return;
+			} else {
+				if (read > 0) {
+					((Amf3Session)session).read();
+				}
+				session.pendingRead();
 			}
-			
-			if (read > 0) {
-				((Amf3Session)session).proceed();
-			}
-			session.pendingRead();
 		}
 
 		@Override
 		public void failed(Throwable exc, Session session) {
-			exc.printStackTrace();
+			System.err.println(exc.getMessage());
 			session.close();
 		}
 	}

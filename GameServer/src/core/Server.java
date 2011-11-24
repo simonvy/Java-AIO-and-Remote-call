@@ -37,19 +37,8 @@ public final class Server {
 					// swallowed.
 				}
 			}
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 			return false;
-		}
-	}
-	
-	public void close() {
-		for (Session session : sessions) {
-			session.close();
-		}
-		try {
-			this.server.close();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -58,6 +47,17 @@ public final class Server {
 			throw new IllegalStateException("channel is null");
 		}
 		this.accept();
+	}
+	
+	public void stop() {
+		for (Session session : sessions) {
+			session.close();
+		}
+		try {
+			this.server.close();
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+		}
 	}
 	
 	private void accept() {

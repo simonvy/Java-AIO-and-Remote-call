@@ -7,13 +7,13 @@ import java.nio.channels.CompletionHandler;
 public abstract class Session {
 
 	private AsynchronousSocketChannel client;
+	
 	private ByteBufferInputStream input;
 	private ByteBufferOutputStream output;
 	
 	private CompletionHandler<Integer, Session> readHandler;
 	private CompletionHandler<Integer, Session> writeHandler;
 
-	
 	public Session(AsynchronousSocketChannel client, 
 			CompletionHandler<Integer, Session> readHandler, CompletionHandler<Integer, Session> writeHandler) {
 		this.client = client;
@@ -61,7 +61,7 @@ public abstract class Session {
 			try {
 				this.client.close();
 			} catch (IOException e) {
-				e.printStackTrace();
+				System.err.println(e.getMessage());
 			}
 			System.out.println("> session closed.");
 		}
@@ -77,6 +77,7 @@ public abstract class Session {
 	
 	private static class DefaultReadHandler implements CompletionHandler<Integer, Session> {
 
+		// the default reader clears the content in the buffer and listen to the client again.
 		@Override
 		public void completed(Integer result, Session session) {
 			if (result == -1) {
@@ -89,7 +90,7 @@ public abstract class Session {
 
 		@Override
 		public void failed(Throwable exc, Session session) {
-			exc.printStackTrace();
+			System.err.println(exc.getMessage());
 			session.close();
 		}
 	}
@@ -98,13 +99,12 @@ public abstract class Session {
 
 		@Override
 		public void completed(Integer result, Session session) {
-		//	System.out.println("> session write succeed.");
 			session.getOutputStream().clear();
 		}
 
 		@Override
 		public void failed(Throwable exc, Session session) {
-			exc.printStackTrace();
+			System.err.println(exc.getMessage());
 			session.close();
 		}
 	}
