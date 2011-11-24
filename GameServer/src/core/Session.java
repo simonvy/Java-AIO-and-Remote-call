@@ -3,17 +3,20 @@ package core;
 import java.io.IOException;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class Session {
 
 	private AsynchronousSocketChannel client;
 	
-	private ByteBufferInputStream input;
+	private ByteBufferInputStream input;	
 	private ByteBufferOutputStream currentOutput;
 	private ByteBufferOutputStream backupOutput;
 	
 	private CompletionHandler<Integer, Session> readHandler;
 	private CompletionHandler<Integer, Session> writeHandler;
+	
+	private AtomicBoolean flushPending;
 
 	protected Session(AsynchronousSocketChannel client, 
 			CompletionHandler<Integer, Session> readHandler,
@@ -21,6 +24,7 @@ public abstract class Session {
 		this.client = client;
 		this.readHandler = readHandler != null ? readHandler : new DefaultReadHandler();
 		this.writeHandler = writeHandler != null ? writeHandler : new DefaultWriteHandler();
+		this.flushPending = new AtomicBoolean(false);
 	}
 	
 	protected abstract void write(RPC rpc, ByteBufferOutputStream output) throws IOException;
@@ -58,21 +62,34 @@ public abstract class Session {
 		}
 		
 		try {
-			write(rpc, this.currentOutput);
+			synchronized (this.currentOutput) {
+				write(rpc, this.currentOutput);
+			}
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 	}
 	
+	private void swap() {
+		synchronized(this.currentOutput) {
+			ByteBufferOutputStream temp = this.currentOutput;
+			this.currentOutput = this.backupOutput;
+			this.backupOutput = temp;
+		}
+	}
+	
 	public void flush() {
 		if (this.client.isOpen()) {
-			
-			
-			
-//			if (this.output.available() > 0) {
-//				this.output.flip();
-//				this.client.write(output.getBuffer(), this, this.writeHandler);
-//			}
+			if (this.currentOutput.available() > 0) {
+				if (!this.backupOutput.locked()) {
+					swap();
+					this.backupOutput.lock();
+					this.backupOutput.flip();
+					this.client.write(this.backupOutput.getBuffer(), this, this.writeHandler);
+				} else {
+					this.flushPending.set(true);
+				}
+			}
 		} else {
 			this.close();
 		}
@@ -116,7 +133,12 @@ public abstract class Session {
 
 		@Override
 		public void completed(Integer result, Session session) {
-		//	session.getOutputStream().clear();
+			session.backupOutput.clear();
+			session.backupOutput.unlock();
+			
+			if (session.flushPending.getAndSet(false)) {
+				session.flush();
+			}
 		}
 
 		@Override
