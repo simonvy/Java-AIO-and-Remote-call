@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-/**
- * not synchronized.
- */
 class ByteBufferInputStream extends InputStream {
+	
 	private final int DEFAULT_BUFFER_SIZE = 10 * 1024;
 	private final int DEFAULT_COMPACT_SIZE = 1 * 1024;
 	
@@ -51,22 +49,6 @@ class ByteBufferInputStream extends InputStream {
 		return this.buffer.position() - position;
 	}
 	
-	@Override
-	public boolean markSupported() {
-		return true;
-	}
-	
-	@Override
-	public void mark(int reserved) {
-		this.mark = this.position;
-	}
-	
-	@Override
-	public void reset() {
-		this.position = this.mark;
-		this.mark = -1;
-	}
-	
 	public void compact() {
 		if (this.buffer.remaining() < DEFAULT_COMPACT_SIZE) {
 			int available = this.available();
@@ -84,12 +66,26 @@ class ByteBufferInputStream extends InputStream {
 	public ByteBuffer getBuffer() {
 		return this.buffer;
 	}
-
+	
+	@Override
+	public boolean markSupported() {
+		return true;
+	}
+	
+	@Override
+	public void mark(int reserved) {
+		this.mark = this.position;
+	}
+	
+	@Override
+	public void reset() {
+		this.position = this.mark;
+		this.mark = -1;
+	}
+	
 	public void clear() {
 		this.mark = -1;
 		this.position = 0;
-		int limit = this.buffer.limit();
-		this.buffer.flip();
-		this.buffer.limit(limit);
+		this.buffer.clear();
 	}
 }

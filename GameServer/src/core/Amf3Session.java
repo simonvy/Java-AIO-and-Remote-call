@@ -13,12 +13,23 @@ import flex.messaging.io.amf.Amf3Output;
 public final class Amf3Session extends Session {
 
 	private Amf3Input amf3Input;
+	private Amf3Output amf3Output;
 	
 	public Amf3Session(AsynchronousSocketChannel client) {
 		super(client, new ReadHandler(), null);
 		
 		SerializationContext context = new SerializationContext();
 		this.amf3Input = new Amf3Input(context);
+		this.amf3Output = new Amf3Output(context);
+	}
+	
+	public boolean init() {
+		if(super.init()) {
+			this.amf3Input.setInputStream(super.getInputStream());
+			this.amf3Output.setOutputStream(super.getOutputStream());
+			return true;
+		}
+		return false;
 	}
 
 	public void call(String funcName, Object...args) {
@@ -29,28 +40,11 @@ public final class Amf3Session extends Session {
 			rpc.setParameters(args);
 		}
 		
-		ByteBufferOutputStream stream = new ByteBufferOutputStream();
-		
-		Amf3Output output = new Amf3Output(new SerializationContext());
-		output.setOutputStream(stream);
-		
 		try {
-			output.writeObject(rpc);
+			amf3Output.writeObject(rpc);
 		} catch (IOException e) {
 			e.printStackTrace();
-			return;
 		}
-		
-		stream.flip();
-		super.pendingWrite(stream.getBuffer());
-	}
-	
-	public boolean init() {
-		if(super.init()) {
-			this.amf3Input.setInputStream(super.getInputStream());
-			return true;
-		}
-		return false;
 	}
 	
 	public void proceed() {
@@ -69,7 +63,7 @@ public final class Amf3Session extends Session {
 				
 				rpc.setSession(this);
 				manager.add(rpc);
-				input.compact();
+			//	input.compact();
 			} catch (EOFException e) {
 				input.reset();
 				break;
@@ -82,9 +76,10 @@ public final class Amf3Session extends Session {
 	}
 	
 	private RPC decode(Object o) {
+		d(o);
 		if (o instanceof ASObject) {
-			RPC rpc = new RPC();
 			ASObject aso = (ASObject)o;
+			RPC rpc = new RPC();
 			
 			if (aso.containsKey("functionName")) {
 				String functionName = (String)aso.get("functionName");
@@ -101,6 +96,14 @@ public final class Amf3Session extends Session {
 			return rpc;
 		}
 		return null;
+	}
+	
+	private void d(Object o) {
+		System.out.println(o);
+		if (o instanceof ASObject) {
+			ASObject aso = (ASObject)o;
+			System.out.println(aso.getType());
+		}
 	}
 	
 	private static class ReadHandler implements CompletionHandler<Integer, Session> {

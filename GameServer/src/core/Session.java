@@ -1,7 +1,6 @@
 package core;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
@@ -9,9 +8,11 @@ public abstract class Session {
 
 	private AsynchronousSocketChannel client;
 	private ByteBufferInputStream input;
+	private ByteBufferOutputStream output;
 	
 	private CompletionHandler<Integer, Session> readHandler;
 	private CompletionHandler<Integer, Session> writeHandler;
+
 	
 	public Session(AsynchronousSocketChannel client, 
 			CompletionHandler<Integer, Session> readHandler, CompletionHandler<Integer, Session> writeHandler) {
@@ -24,6 +25,7 @@ public abstract class Session {
 	
 	public boolean init() {
 		this.input = new ByteBufferInputStream();
+		this.output = new ByteBufferOutputStream();
 		// this.client.setOption(StandardSocketOptions.SO_SNDBUF, 10 * 1024);
 		return true;
 	}
@@ -39,12 +41,15 @@ public abstract class Session {
 		}
 	}
 	
-	public void pendingWrite(ByteBuffer buffer) {
-		if (this.client == null) {
-			throw new IllegalStateException("the client is null");
-		}
+	public void lock() {
+	}
+
+	public void unlock() {
 		if (this.client.isOpen()) {
-			this.client.write(buffer, this, this.writeHandler);
+			if (this.output.available() > 0) {
+				this.output.flip();
+				this.client.write(output.getBuffer(), this, this.writeHandler);
+			}
 		} else {
 			this.close();
 		}
@@ -64,6 +69,10 @@ public abstract class Session {
 	
 	public ByteBufferInputStream getInputStream() {
 		return this.input;
+	}
+	
+	public ByteBufferOutputStream getOutputStream() {
+		return this.output;
 	}
 	
 	private static class DefaultReadHandler implements CompletionHandler<Integer, Session> {
@@ -90,6 +99,7 @@ public abstract class Session {
 		@Override
 		public void completed(Integer result, Session session) {
 		//	System.out.println("> session write succeed.");
+			session.getOutputStream().clear();
 		}
 
 		@Override

@@ -41,6 +41,10 @@ public class RPCManager {
 		Pair p = this.rpcs.get(funcName);
 		try {
 			System.out.println("> call " + funcName);
+			
+			Session session = rpc.getSession();
+			session.lock();
+			
 			if (rpc.getParameters() != null && rpc.getParameters().length > 0) {
 				Object[] params = new Object[1 + rpc.getParameters().length];
 				params[0] = rpc.getSession();
@@ -49,6 +53,8 @@ public class RPCManager {
 			} else {
 				p.method.invoke(p.host, rpc.getSession());
 			}
+			
+			session.unlock();
 		} catch (IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
 			System.err.println("> remote call function " + funcName + " generates error.");
