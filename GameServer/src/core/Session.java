@@ -6,15 +6,22 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+
+import flex.messaging.io.SerializationContext;
 import flex.messaging.io.amf.Amf3Input;
 
 public final class Session {
 
 	private AsynchronousSocketChannel client;
 	private ByteBufferInputStream input;
+	
+	private ReadHandler readHandler;
+	private WriteHandler writeHandler;
 
 	public Session(AsynchronousSocketChannel client) {
 		this.client = client;
+		this.readHandler = new ReadHandler();
+		this.writeHandler = new WriteHandler();
 	}
 	
 	public boolean init() {
@@ -28,7 +35,7 @@ public final class Session {
 			throw new IllegalStateException("the client is null");
 		}
 		if (this.client.isOpen()) {
-			this.client.read(input.getBuffer(), this, new ObjectReadHandler());
+			this.client.read(input.getBuffer(), this, this.readHandler);
 		} else {
 			this.close();
 		}
@@ -53,7 +60,7 @@ public final class Session {
 		}
 		
 		if (this.client.isOpen()) {
-			this.client.write(output.getBuffer(), this, new ObjectWriterHandler());
+			this.client.write(output.getBuffer(), this, this.writeHandler);
 		} else {
 			this.close();
 		}
@@ -71,7 +78,7 @@ public final class Session {
 		}
 	}
 	
-	private class ObjectWriterHandler implements CompletionHandler<Integer, Session> {
+	private class WriteHandler implements CompletionHandler<Integer, Session> {
 
 		@Override
 		public void completed(Integer result, Session session) {
@@ -85,7 +92,7 @@ public final class Session {
 		}
 	}
 	
-	private class ObjectReadHandler implements CompletionHandler<Integer, Session> {
+	private class ReadHandler implements CompletionHandler<Integer, Session> {
 		
 		@Override
 		public void completed(Integer read, Session session) {
@@ -112,23 +119,26 @@ public final class Session {
 			
 			while (true) {
 				input.mark();
-				try (ObjectInputStream stream = new ObjectInputStream(input)) {
-					RPC rpc = (RPC) stream.readObject();
-					
-					rpc.setSession(session);
-					manager.add(rpc);
-					input.compact();
-//					synchronized(manager) {
-//						manager.notify();
-//					}
-				} catch (EOFException e) {
-					input.reset();
-					break;
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-					session.close();
-					break;
-				}
+				Amf3Input amf3 = new Amf3Input(new SerializationContext());
+				amf3.setInputStream(input);
+//				Object obj = amf3.readObject();
+//				try (ObjectInputStream stream = new ObjectInputStream(input)) {
+//					RPC rpc = (RPC) stream.readObject();
+//					
+//					rpc.setSession(session);
+//					manager.add(rpc);
+//					input.compact();
+////					synchronized(manager) {
+////						manager.notify();
+////					}
+//				} catch (EOFException e) {
+//					input.reset();
+//					break;
+//				} catch (ClassNotFoundException | IOException e) {
+//					e.printStackTrace();
+//					session.close();
+//					break;
+//				}
 			}			
 		}
 	}

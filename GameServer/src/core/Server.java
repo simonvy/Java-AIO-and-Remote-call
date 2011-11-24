@@ -14,9 +14,11 @@ import java.util.concurrent.Executors;
 public final class Server {
 	private final int MAX_THREAD_NUM = 1 + 2;
 	
+	private Set<Session> sessions = new HashSet<>();
+	
 	private int port;
 	private AsynchronousServerSocketChannel server;
-	private Set<Session> sessions = new HashSet<>();
+	private AcceptHandler acceptHandler = new AcceptHandler();
 	
 	public boolean init(int port) {
 		this.port = port;
@@ -60,7 +62,7 @@ public final class Server {
 	
 	private void accept() {
 		if (this.server.isOpen()) {
-			this.server.accept(this, new AcceptHandler());
+			this.server.accept(this, acceptHandler);
 		}
 	}
 	
