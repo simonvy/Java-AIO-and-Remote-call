@@ -14,7 +14,7 @@ public abstract class Session {
 	private CompletionHandler<Integer, Session> readHandler;
 	private CompletionHandler<Integer, Session> writeHandler;
 
-	public Session(AsynchronousSocketChannel client, 
+	protected Session(AsynchronousSocketChannel client, 
 			CompletionHandler<Integer, Session> readHandler, CompletionHandler<Integer, Session> writeHandler) {
 		this.client = client;
 		this.readHandler = readHandler != null ? readHandler : new DefaultReadHandler();
@@ -28,6 +28,11 @@ public abstract class Session {
 		this.output = new ByteBufferOutputStream();
 		// this.client.setOption(StandardSocketOptions.SO_SNDBUF, 10 * 1024);
 		return true;
+	}
+	
+	// the default read clears up the input buffer.
+	public void read() {
+		this.input.clear();
 	}
 	
 	public void pendingRead() {
@@ -83,7 +88,9 @@ public abstract class Session {
 			if (result == -1) {
 				session.close();
 			} else {
-				session.getInputStream().clear();
+				if (result > 0) {
+					session.read();
+				}
 				session.pendingRead();
 			}
 		}

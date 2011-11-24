@@ -3,7 +3,6 @@ package core;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
 
 import flex.messaging.io.SerializationContext;
 import flex.messaging.io.amf.ASObject;
@@ -16,7 +15,7 @@ public final class Amf3Session extends Session {
 	private Amf3Output amf3Output;
 	
 	public Amf3Session(AsynchronousSocketChannel client) {
-		super(client, new ReadHandler(), null);
+		super(client, null, null);
 		
 		SerializationContext context = new SerializationContext();
 		this.amf3Input = new Amf3Input(context);
@@ -32,21 +31,23 @@ public final class Amf3Session extends Session {
 		return false;
 	}
 
-	public void call(String funcName, Object...args) {
+	public void call(String funcName, Object...params) {
 		RPC rpc = new RPC();
 		
 		rpc.setFunctionName(funcName);
-		if (args.length > 0) {
-			rpc.setParameters(args);
+		if (params.length > 0) {
+			rpc.setParameters(params);
 		}
 		
 		try {
 			amf3Output.writeObject(rpc);
+			amf3Output.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 	
+	@Override
 	public void read() {
 		RPCManager manager = Context.instance().get(RPCManager.class);
 		ByteBufferInputStream input = super.getInputStream();
@@ -102,27 +103,6 @@ public final class Amf3Session extends Session {
 		if (o instanceof ASObject) {
 			ASObject aso = (ASObject)o;
 			System.out.println(aso.getType());
-		}
-	}
-	
-	private static class ReadHandler implements CompletionHandler<Integer, Session> {
-
-		@Override
-		public void completed(Integer read, Session session) {
-			if (read == -1) {
-				session.close();
-			} else {
-				if (read > 0) {
-					((Amf3Session)session).read();
-				}
-				session.pendingRead();
-			}
-		}
-
-		@Override
-		public void failed(Throwable exc, Session session) {
-			System.err.println(exc.getMessage());
-			session.close();
 		}
 	}
 }
