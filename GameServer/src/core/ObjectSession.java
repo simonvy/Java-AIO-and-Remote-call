@@ -16,16 +16,15 @@ public class ObjectSession extends Session {
 	}
 	
 	@Override
-	protected void write(RPC rpc) throws IOException {
-		ObjectOutputStream stream = new ObjectOutputStream(super.getOutputStream());
+	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+		ObjectOutputStream stream = new ObjectOutputStream(output);
 		stream.writeObject(rpc);
 		stream.flush();
 	}
 	
 	@Override
-	public void read() {
+	protected void read(ByteBufferInputStream input) {
 		RPCManager manager = Context.instance().get(RPCManager.class);
-		ByteBufferInputStream input = super.getInputStream();
 		
 		while (true) {
 			input.mark(0);

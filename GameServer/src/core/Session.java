@@ -9,7 +9,8 @@ public abstract class Session {
 	private AsynchronousSocketChannel client;
 	
 	private ByteBufferInputStream input;
-	private ByteBufferOutputStream output;
+	private ByteBufferOutputStream currentOutput;
+	private ByteBufferOutputStream backupOutput;
 	
 	private CompletionHandler<Integer, Session> readHandler;
 	private CompletionHandler<Integer, Session> writeHandler;
@@ -22,18 +23,19 @@ public abstract class Session {
 		this.writeHandler = writeHandler != null ? writeHandler : new DefaultWriteHandler();
 	}
 	
-	protected abstract void write(RPC rpc) throws IOException;
+	protected abstract void write(RPC rpc, ByteBufferOutputStream output) throws IOException;
 	
 	public boolean init() {
 		this.input = new ByteBufferInputStream();
-		this.output = new ByteBufferOutputStream();
+		this.currentOutput = new ByteBufferOutputStream();
+		this.backupOutput = new ByteBufferOutputStream();
 		// this.client.setOption(StandardSocketOptions.SO_SNDBUF, 10 * 1024);
 		return true;
 	}
 	
 	// the default read clears up the input buffer.
-	public void read() {
-		this.input.clear();
+	protected void read(ByteBufferInputStream bbis) {
+		bbis.clear();
 	}
 	
 	public void pendingRead() {
@@ -56,26 +58,21 @@ public abstract class Session {
 		}
 		
 		try {
-			write(rpc);
+			write(rpc, this.currentOutput);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 	}
 	
-	public boolean locked() {
-		return false;
-	}
-
-	public void unlock() {
-		
-	}
-	
 	public void flush() {
 		if (this.client.isOpen()) {
-			if (this.output.available() > 0) {
-				this.output.flip();
-				this.client.write(output.getBuffer(), this, this.writeHandler);
-			}
+			
+			
+			
+//			if (this.output.available() > 0) {
+//				this.output.flip();
+//				this.client.write(output.getBuffer(), this, this.writeHandler);
+//			}
 		} else {
 			this.close();
 		}
@@ -93,14 +90,6 @@ public abstract class Session {
 		}
 	}
 	
-	public ByteBufferInputStream getInputStream() {
-		return this.input;
-	}
-	
-	public ByteBufferOutputStream getOutputStream() {
-		return this.output;
-	}
-	
 	private static class DefaultReadHandler implements CompletionHandler<Integer, Session> {
 
 		// the default reader clears the content in the buffer and listen to the client again.
@@ -110,7 +99,7 @@ public abstract class Session {
 				session.close();
 			} else {
 				if (result > 0) {
-					session.read();
+					session.read(session.input);
 				}
 				session.pendingRead();
 			}
@@ -127,7 +116,7 @@ public abstract class Session {
 
 		@Override
 		public void completed(Integer result, Session session) {
-			session.getOutputStream().clear();
+		//	session.getOutputStream().clear();
 		}
 
 		@Override

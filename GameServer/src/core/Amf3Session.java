@@ -21,26 +21,18 @@ public final class Amf3Session extends Session {
 		this.amf3Input = new Amf3Input(context);
 		this.amf3Output = new Amf3Output(context);
 	}
-	
-	public boolean init() {
-		if(super.init()) {
-			this.amf3Input.setInputStream(super.getInputStream());
-			this.amf3Output.setOutputStream(super.getOutputStream());
-			return true;
-		}
-		return false;
-	}
 
 	@Override
-	protected void write(RPC rpc) throws IOException {
-		amf3Output.writeObject(rpc);
-		amf3Output.flush();
+	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+		this.amf3Output.setOutputStream(output);
+		this.amf3Output.writeObject(rpc);
+		this.amf3Output.flush();
 	}
 	
 	@Override
-	public void read() {
+	protected void read(ByteBufferInputStream input) {
 		RPCManager manager = Context.instance().get(RPCManager.class);
-		ByteBufferInputStream input = super.getInputStream();
+		this.amf3Input.setInputStream(input);
 		
 		while (true) {
 			input.mark(0);
