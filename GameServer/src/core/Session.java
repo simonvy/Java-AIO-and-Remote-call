@@ -1,25 +1,26 @@
 package core;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
-import flex.messaging.io.SerializationContext;
-import flex.messaging.io.amf.Amf3Output;
-
-public final class Session {
+public abstract class Session {
 
 	private AsynchronousSocketChannel client;
 	private ByteBufferInputStream input;
 	
 	private CompletionHandler<Integer, Session> readHandler;
 	private CompletionHandler<Integer, Session> writeHandler;
-
-	public Session(AsynchronousSocketChannel client) {
+	
+	public Session(AsynchronousSocketChannel client, 
+			CompletionHandler<Integer, Session> readHandler, CompletionHandler<Integer, Session> writeHandler) {
 		this.client = client;
-		this.readHandler = new Amf3Reader();
-		this.writeHandler = new DefaultWriteHandler();
+		this.readHandler = readHandler != null ? readHandler : new DefaultReadHandler();
+		this.writeHandler = writeHandler != null ? writeHandler : new DefaultWriteHandler();
 	}
+	
+	public abstract void call(String funcName, Object...params);
 	
 	public boolean init() {
 		this.input = new ByteBufferInputStream();
@@ -27,12 +28,23 @@ public final class Session {
 		return true;
 	}
 	
-	public void listen() {
+	public void pendingRead() {
 		if (this.client == null) {
 			throw new IllegalStateException("the client is null");
 		}
 		if (this.client.isOpen()) {
 			this.client.read(input.getBuffer(), this, this.readHandler);
+		} else {
+			this.close();
+		}
+	}
+	
+	public void pendingWrite(ByteBuffer buffer) {
+		if (this.client == null) {
+			throw new IllegalStateException("the client is null");
+		}
+		if (this.client.isOpen()) {
+			this.client.write(buffer, this, this.writeHandler);
 		} else {
 			this.close();
 		}
@@ -50,41 +62,29 @@ public final class Session {
 		}
 	}
 	
-	public void call(String funcName, Object...args) {
-		RPC rpc = new RPC();
-		
-		rpc.setFunctionName(funcName);
-		if (args.length > 0) {
-			rpc.setParameters(args);
-		}
-		
-		ByteBufferOutputStream stream = new ByteBufferOutputStream();
-		
-		Amf3Output output = new Amf3Output(new SerializationContext());
-		output.setOutputStream(stream);
-		
-		try {
-			output.writeObject(rpc);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-		
-		stream.flip();
-		
-		if (this.client.isOpen()) {
-			// WritePendingException
-			this.client.write(stream.getBuffer(), this, this.writeHandler);
-		} else {
-			this.close();
-		}
-	}
-	
 	public ByteBufferInputStream getInputStream() {
 		return this.input;
 	}
 	
-	private class DefaultWriteHandler implements CompletionHandler<Integer, Session> {
+	private static class DefaultReadHandler implements CompletionHandler<Integer, Session> {
+
+		@Override
+		public void completed(Integer result, Session session) {
+			if (result == -1) {
+				session.close();
+			} else {
+				session.getInputStream().clear();
+			}
+		}
+
+		@Override
+		public void failed(Throwable exc, Session session) {
+			exc.printStackTrace();
+			session.close();
+		}
+	}
+	
+	private static class DefaultWriteHandler implements CompletionHandler<Integer, Session> {
 
 		@Override
 		public void completed(Integer result, Session session) {

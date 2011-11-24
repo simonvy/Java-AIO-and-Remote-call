@@ -88,11 +88,11 @@ public final class Server {
 		public void completed(AsynchronousSocketChannel client, Server controller) {
 			controller.accept();
 			
-			Session session = new Session(client);
+			Session session = new Amf3Session(client);
 			if (session.init()) {
 				System.out.println("> session connected.");
 				controller.registerSession(session);
-				session.listen();
+				session.pendingRead();
 			} else {
 				System.out.println("> session initialize failed.");
 			}

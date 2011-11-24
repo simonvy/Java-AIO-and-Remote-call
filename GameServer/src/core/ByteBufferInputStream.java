@@ -84,4 +84,12 @@ class ByteBufferInputStream extends InputStream {
 	public ByteBuffer getBuffer() {
 		return this.buffer;
 	}
+
+	public void clear() {
+		this.mark = -1;
+		this.position = 0;
+		int limit = this.buffer.limit();
+		this.buffer.flip();
+		this.buffer.limit(limit);
+	}
 }
