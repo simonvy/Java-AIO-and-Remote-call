@@ -20,10 +20,13 @@ public class Echo {
 		}
 	}
 	
+	private int count = 1;
+	
 	public void echo(Session session, String client) {
 		String message = "Hello " + client + "!";
-		System.out.println(message);
-		session.remoteCall("echo", message);
+
+		session.call("echo" + count++, message);
+		session.call("echo" + count++, message);
 	}
 	
 }

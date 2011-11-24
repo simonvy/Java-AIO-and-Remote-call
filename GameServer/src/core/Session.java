@@ -1,9 +1,6 @@
 package core;
 
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 
@@ -20,7 +17,7 @@ public final class Session {
 
 	public Session(AsynchronousSocketChannel client) {
 		this.client = client;
-		this.readHandler = new Amf3ReadHandler();
+		this.readHandler = new Amf3Reader();
 		this.writeHandler = new DefaultWriteHandler();
 	}
 	
@@ -41,7 +38,19 @@ public final class Session {
 		}
 	}
 	
-	public void remoteCall(String funcName, Object...args) {
+	public synchronized void close() {
+		Context.instance().get(Server.class).removeSession(this);
+		if (this.client.isOpen()) {
+			try {
+				this.client.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			System.out.println("> session closed.");
+		}
+	}
+	
+	public void call(String funcName, Object...args) {
 		RPC rpc = new RPC();
 		
 		rpc.setFunctionName(funcName);
@@ -71,23 +80,9 @@ public final class Session {
 		}
 	}
 	
-	public synchronized void close() {
-		Context.instance().get(Server.class).removeSession(this);
-		if (this.client.isOpen()) {
-			try {
-				this.client.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			System.out.println("> session closed.");
-		}
-	}
-	
 	public ByteBufferInputStream getInputStream() {
 		return this.input;
 	}
-	
-	//
 	
 	private class DefaultWriteHandler implements CompletionHandler<Integer, Session> {
 
@@ -100,54 +95,6 @@ public final class Session {
 		public void failed(Throwable exc, Session session) {
 			exc.printStackTrace();
 			session.close();
-		}
-	}
-	
-	private class ReadHandler implements CompletionHandler<Integer, Session> {
-		
-		@Override
-		public void completed(Integer read, Session session) {
-			if (read == -1) {
-				session.close();
-				return;
-			}
-			
-			if (read > 0) {
-				handleData(read, session);
-			}
-			session.listen();
-		}
-
-		@Override
-		public void failed(Throwable exc, Session session) {
-			exc.printStackTrace();
-			session.close();
-		}
-		
-		private void handleData(Integer read, Session session) {
-			RPCManager manager = Context.instance().get(RPCManager.class);
-			ByteBufferInputStream input = session.input;
-			
-			while (true) {
-				input.mark(0);
-				try (ObjectInputStream stream = new ObjectInputStream(input)) {
-					RPC rpc = (RPC) stream.readObject();
-					
-					rpc.setSession(session);
-					manager.add(rpc);
-					input.compact();
-//					synchronized(manager) {
-//						manager.notify();
-//					}
-				} catch (EOFException e) {
-					input.reset();
-					break;
-				} catch (ClassNotFoundException | IOException e) {
-					e.printStackTrace();
-					session.close();
-					break;
-				}
-			}			
 		}
 	}
 }

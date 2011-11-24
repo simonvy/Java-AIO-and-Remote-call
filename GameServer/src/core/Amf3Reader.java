@@ -8,11 +8,11 @@ import flex.messaging.io.SerializationContext;
 import flex.messaging.io.amf.ASObject;
 import flex.messaging.io.amf.Amf3Input;
 
-public class Amf3ReadHandler implements CompletionHandler<Integer, Session> {
+public class Amf3Reader implements CompletionHandler<Integer, Session> {
 
 	private Amf3Input amf3Input;
 	
-	public Amf3ReadHandler() {
+	public Amf3Reader() {
 		SerializationContext context = new SerializationContext();
 		this.amf3Input = new Amf3Input(context);
 	}
