@@ -2,25 +2,23 @@ package core;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-
-import flex.messaging.io.SerializationContext;
-import flex.messaging.io.amf.Amf3Input;
 
 public final class Session {
 
 	private AsynchronousSocketChannel client;
 	private ByteBufferInputStream input;
 	
-	private ReadHandler readHandler;
-	private WriteHandler writeHandler;
+	private CompletionHandler<Integer, Session> readHandler;
+	private CompletionHandler<Integer, Session> writeHandler;
 
 	public Session(AsynchronousSocketChannel client) {
 		this.client = client;
-		this.readHandler = new ReadHandler();
+		this.readHandler = new Amf3ReadHandler();
 		this.writeHandler = new WriteHandler();
 	}
 	
@@ -78,11 +76,17 @@ public final class Session {
 		}
 	}
 	
+	public ByteBufferInputStream getInputStream() {
+		return this.input;
+	}
+	
+	//
+	
 	private class WriteHandler implements CompletionHandler<Integer, Session> {
 
 		@Override
 		public void completed(Integer result, Session session) {
-			System.out.println("> session write succeed.");
+		//	System.out.println("> session write succeed.");
 		}
 
 		@Override
@@ -118,27 +122,24 @@ public final class Session {
 			ByteBufferInputStream input = session.input;
 			
 			while (true) {
-				input.mark();
-				Amf3Input amf3 = new Amf3Input(new SerializationContext());
-				amf3.setInputStream(input);
-//				Object obj = amf3.readObject();
-//				try (ObjectInputStream stream = new ObjectInputStream(input)) {
-//					RPC rpc = (RPC) stream.readObject();
-//					
-//					rpc.setSession(session);
-//					manager.add(rpc);
-//					input.compact();
-////					synchronized(manager) {
-////						manager.notify();
-////					}
-//				} catch (EOFException e) {
-//					input.reset();
-//					break;
-//				} catch (ClassNotFoundException | IOException e) {
-//					e.printStackTrace();
-//					session.close();
-//					break;
-//				}
+				input.mark(0);
+				try (ObjectInputStream stream = new ObjectInputStream(input)) {
+					RPC rpc = (RPC) stream.readObject();
+					
+					rpc.setSession(session);
+					manager.add(rpc);
+					input.compact();
+//					synchronized(manager) {
+//						manager.notify();
+//					}
+				} catch (EOFException e) {
+					input.reset();
+					break;
+				} catch (ClassNotFoundException | IOException e) {
+					e.printStackTrace();
+					session.close();
+					break;
+				}
 			}			
 		}
 	}

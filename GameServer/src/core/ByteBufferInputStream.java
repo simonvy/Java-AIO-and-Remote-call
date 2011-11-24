@@ -58,10 +58,6 @@ class ByteBufferInputStream extends InputStream {
 	
 	@Override
 	public void mark(int reserved) {
-		throw new UnsupportedOperationException("");
-	}
-	
-	public void mark() {
 		this.mark = this.position;
 	}
 	
