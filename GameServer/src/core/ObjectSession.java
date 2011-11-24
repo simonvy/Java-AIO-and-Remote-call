@@ -14,24 +14,12 @@ public class ObjectSession extends Session {
 			CompletionHandler<Integer, Session> writeHandler) {
 		super(client, null, null);
 	}
-
+	
 	@Override
-	public void call(String funcName, Object... params) {
-		RPC rpc = new RPC();
-		
-		rpc.setFunctionName(funcName);
-		if (params.length > 0) {
-			rpc.setParameters(params);
-		}
-		
-		ObjectOutputStream stream;
-		try {
-			stream = new ObjectOutputStream(super.getOutputStream());
-			stream.writeObject(rpc);
-			stream.flush();
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
+	protected void write(RPC rpc) throws IOException {
+		ObjectOutputStream stream = new ObjectOutputStream(super.getOutputStream());
+		stream.writeObject(rpc);
+		stream.flush();
 	}
 	
 	@Override

@@ -15,13 +15,14 @@ public abstract class Session {
 	private CompletionHandler<Integer, Session> writeHandler;
 
 	protected Session(AsynchronousSocketChannel client, 
-			CompletionHandler<Integer, Session> readHandler, CompletionHandler<Integer, Session> writeHandler) {
+			CompletionHandler<Integer, Session> readHandler,
+			CompletionHandler<Integer, Session> writeHandler) {
 		this.client = client;
 		this.readHandler = readHandler != null ? readHandler : new DefaultReadHandler();
 		this.writeHandler = writeHandler != null ? writeHandler : new DefaultWriteHandler();
 	}
 	
-	public abstract void call(String funcName, Object...params);
+	protected abstract void write(RPC rpc) throws IOException;
 	
 	public boolean init() {
 		this.input = new ByteBufferInputStream();
@@ -46,10 +47,30 @@ public abstract class Session {
 		}
 	}
 	
-	public void lock() {
+	public void call(String funcName, Object...params) {
+		RPC rpc = new RPC();
+		
+		rpc.setFunctionName(funcName);
+		if (params.length > 0) {
+			rpc.setParameters(params);
+		}
+		
+		try {
+			write(rpc);
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+		}
+	}
+	
+	public boolean locked() {
+		return false;
 	}
 
 	public void unlock() {
+		
+	}
+	
+	public void flush() {
 		if (this.client.isOpen()) {
 			if (this.output.available() > 0) {
 				this.output.flip();

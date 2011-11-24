@@ -31,20 +31,10 @@ public final class Amf3Session extends Session {
 		return false;
 	}
 
-	public void call(String funcName, Object...params) {
-		RPC rpc = new RPC();
-		
-		rpc.setFunctionName(funcName);
-		if (params.length > 0) {
-			rpc.setParameters(params);
-		}
-		
-		try {
-			amf3Output.writeObject(rpc);
-			amf3Output.flush();
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
+	@Override
+	protected void write(RPC rpc) throws IOException {
+		amf3Output.writeObject(rpc);
+		amf3Output.flush();
 	}
 	
 	@Override
