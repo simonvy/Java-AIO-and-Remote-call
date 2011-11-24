@@ -74,6 +74,7 @@ public abstract class Session {
 				session.close();
 			} else {
 				session.getInputStream().clear();
+				session.pendingRead();
 			}
 		}
 
