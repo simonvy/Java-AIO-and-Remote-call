@@ -66,6 +66,6 @@ public final class Amf3Session extends Session {
 				close();
 				break;
 			}
-		}		
+		}
 	}
 }

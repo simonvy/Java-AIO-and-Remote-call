@@ -27,8 +27,6 @@ public abstract class Session {
 		this.flushPending = new AtomicBoolean(false);
 	}
 	
-	protected abstract void write(RPC rpc, ByteBufferOutputStream output) throws IOException;
-	
 	public boolean init() {
 		this.input = new ByteBufferInputStream();
 		this.currentOutput = new ByteBufferOutputStream();
@@ -40,6 +38,10 @@ public abstract class Session {
 	// the default read clears up the input buffer.
 	protected void read(ByteBufferInputStream bbis) {
 		bbis.clear();
+	}
+	
+	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+		// do nothing
 	}
 	
 	public void pendingRead() {
