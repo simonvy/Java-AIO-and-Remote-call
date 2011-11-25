@@ -88,7 +88,7 @@ public final class Server {
 		public void completed(AsynchronousSocketChannel client, Server controller) {
 			controller.accept();
 			
-			Session session = new Amf3Session(client);
+			Session session = new LegacySession(client);
 			if (session.init()) {
 				System.out.println("> session connected.");
 				controller.registerSession(session);

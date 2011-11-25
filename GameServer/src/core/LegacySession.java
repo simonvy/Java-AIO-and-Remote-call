@@ -30,7 +30,15 @@ public class LegacySession extends Session {
 		while (true) {
 			input.mark(0);
 			try {
+				input.read(); 
+				int length = input.read(); 
+				input.read(); input.read(); // length of the package
+				//int length = amf3Input.readInt(); // length of the package
+				int i = amf3Input.readInt(); // garbage 0
+				
 				Object o = amf3Input.readObject();
+				
+				 o = amf3Input.readObject();
 				
 				if (!(o instanceof RPC)) {
 					throw new ClassNotFoundException("");
