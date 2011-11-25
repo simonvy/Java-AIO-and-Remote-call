@@ -25,7 +25,7 @@ public final class Game {
 		new Echo().register();
 		
 		
-		this.server.init(10010);
+		this.server.init(6668);
 		this.server.start();
 		this.rpcManager.start();
 		

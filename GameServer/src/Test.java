@@ -11,7 +11,7 @@ import core.RPC;
 public class Test {
 
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-		SocketAddress address = new InetSocketAddress("127.0.0.1", 10010);
+		SocketAddress address = new InetSocketAddress("127.0.0.1", 6668);
 		Socket socket = new Socket();
 		
 		socket.connect(address);
