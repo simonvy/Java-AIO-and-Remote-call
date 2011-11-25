@@ -3,6 +3,7 @@ package core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 class ByteBufferInputStream extends InputStream {
 	
@@ -16,6 +17,7 @@ class ByteBufferInputStream extends InputStream {
 	
 	public ByteBufferInputStream() {
 		this.buffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
+		this.buffer.order(ByteOrder.LITTLE_ENDIAN);
 		this.position = 0;
 		this.mark = -1;
 	}

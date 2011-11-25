@@ -3,6 +3,7 @@ package core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class ByteBufferOutputStream extends OutputStream {
@@ -15,6 +16,7 @@ class ByteBufferOutputStream extends OutputStream {
 	
 	public ByteBufferOutputStream() {
 		this.buffer = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
+		this.buffer.order(ByteOrder.LITTLE_ENDIAN);
 		this.locked = new AtomicBoolean(false);
 	}
 	
