@@ -49,12 +49,11 @@ public final class Amf3Session extends Session {
 					continue;
 				}
 				
-				if (rpc != null) {
-					rpc.setSession(this);
-					manager.add(rpc);
-					synchronized (manager) {
-						manager.notify();
-					}
+				rpc.setSession(this);
+				manager.add(rpc);
+				
+				synchronized (manager) {
+					manager.notify();
 				}
 				
 				input.compact();
