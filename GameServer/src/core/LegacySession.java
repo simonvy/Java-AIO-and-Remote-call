@@ -2,6 +2,7 @@ package core;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.AsynchronousSocketChannel;
 
 import flex.messaging.io.SerializationContext;
@@ -25,41 +26,41 @@ public class LegacySession extends Session {
 	@Override
 	protected void read(ByteBufferInputStream input) {
 		RPCManager manager = Context.instance().get(RPCManager.class);
-		this.amf3Input.setInputStream(input);
+		LegacyInputStream stream = new LegacyInputStream(input);
+		
+		this.amf3Input.setInputStream(stream);
 		
 		while (true) {
 			input.mark(0);
+			
 			try {
-				input.read(); 
-				int length = input.read(); 
-				input.read(); input.read(); // length of the package
-				//int length = amf3Input.readInt(); // length of the package
-				int i = amf3Input.readInt(); // garbage 0
+				amf3Input.readInt(); // length of the package
 				
+				stream.startDecode();
+				amf3Input.readInt(); // garbage 0
 				Object o = amf3Input.readObject();
+				stream.stopDecode();
 				
-				 o = amf3Input.readObject();
-				
-				if (!(o instanceof RPC)) {
-					throw new ClassNotFoundException("");
-				}
-				
-				RPC rpc = (RPC)o;
-				
-				if (rpc.getFunctionName() == null || rpc.getFunctionName().length() == 0) {
-					System.err.println("remote call function name is empty");
-					continue;
-				}
-				
-				if (rpc != null) {
+				if (checkRemoteObject(o)) {
+					Object[] values = (Object[])o;
+					RPC rpc = new RPC();
+					
+					rpc.setFunctionName((String)values[1]);
+					rpc.setParameters((Object[])values[2]);
+					
+					if (rpc.getFunctionName() == null || rpc.getFunctionName().length() == 0) {
+						System.err.println("remote call function name is empty");
+						continue;
+					}
+					
 					rpc.setSession(this);
 					manager.add(rpc);
 					synchronized (manager) {
 						manager.notify();
 					}
+					
+					input.compact();
 				}
-				
-				input.compact();
 			} catch (EOFException e) {
 				input.reset();
 				break;
@@ -68,6 +69,47 @@ public class LegacySession extends Session {
 				close();
 				break;
 			}
+		}
+	}
+	
+	private boolean checkRemoteObject(Object o) throws ClassNotFoundException {
+		if (!(o instanceof Object[])) {
+			throw new ClassNotFoundException("");
+		}
+		Object[] values = (Object[])o;
+		return values.length == 3
+				// value[0] is a reserved integer
+				&& values[1] instanceof String
+				&& values[2] instanceof Object[];
+	}
+	
+	private class LegacyInputStream extends InputStream {
+		private ByteBufferInputStream input;
+		
+		private int index = 0;
+		private boolean decoding = false;
+		
+		public LegacyInputStream(ByteBufferInputStream input) {
+			this.input = input;
+		}
+
+		public void startDecode() {
+			index = 0;
+			this.decoding = true;
+		}
+		
+		public void stopDecode() {
+			this.decoding = false;
+		}
+
+		@Override
+		public int read() throws IOException {
+			int v = this.input.read();
+			if (decoding && v >= 0) {
+				v = (v & 0xFF) ^ (index % 7);
+				index ++;
+			}
+			return v;
 		}
 	}
 
