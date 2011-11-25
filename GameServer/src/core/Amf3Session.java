@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.channels.AsynchronousSocketChannel;
 
 import flex.messaging.io.SerializationContext;
-import flex.messaging.io.amf.ASObject;
 import flex.messaging.io.amf.Amf3Input;
 import flex.messaging.io.amf.Amf3Output;
 
@@ -38,7 +37,17 @@ public final class Amf3Session extends Session {
 			input.mark(0);
 			try {
 				Object o = amf3Input.readObject();
-				RPC rpc = decode(o);
+				
+				if (!(o instanceof RPC)) {
+					throw new ClassNotFoundException("");
+				}
+				
+				RPC rpc = (RPC)o;
+				
+				if (rpc.getFunctionName() == null || rpc.getFunctionName().length() == 0) {
+					System.err.println("remote call function name is empty");
+					continue;
+				}
 				
 				if (rpc != null) {
 					rpc.setSession(this);
@@ -55,36 +64,5 @@ public final class Amf3Session extends Session {
 				break;
 			}
 		}		
-	}
-	
-	private RPC decode(Object o) {
-		d(o);
-		if (o instanceof ASObject) {
-			ASObject aso = (ASObject)o;
-			RPC rpc = new RPC();
-			
-			if (aso.containsKey("functionName")) {
-				String functionName = (String)aso.get("functionName");
-				rpc.setFunctionName(functionName);
-			} else {
-				return null;
-			}
-			
-			if (aso.containsKey("params")) {
-				Object[] params = (Object[])aso.get("params");
-				rpc.setParameters(params);
-			}
-			
-			return rpc;
-		}
-		return null;
-	}
-	
-	private void d(Object o) {
-		System.out.println(o);
-		if (o instanceof ASObject) {
-			ASObject aso = (ASObject)o;
-			System.out.println(aso.getType());
-		}
 	}
 }

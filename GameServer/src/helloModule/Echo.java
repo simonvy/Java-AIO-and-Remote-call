@@ -20,13 +20,12 @@ public class Echo {
 		}
 	}
 	
-	private int count = 1;
-	
 	public void echo(Session session, String client) {
 		String message = "Hello " + client + "!";
 
-		session.call("echo" + count++, message);
-		session.call("echo" + count++, message);
+		session.call("echo", message);
+		session.call("echo", message);
+		session.call("echoObject", new EchoName("client", "id"));
 	}
 	
 }

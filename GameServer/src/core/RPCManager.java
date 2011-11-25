@@ -72,7 +72,7 @@ public class RPCManager {
 	
 	private class RPCHandler implements Runnable {
 		
-		private final int WAIT_TIME = 1000 * 2;
+		private final int WAIT_TIME = 500;
 		
 		private RPCManager manager;
 		
