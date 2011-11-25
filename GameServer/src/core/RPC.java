@@ -31,17 +31,4 @@ public class RPC implements Serializable {
 	public Session getSession() {
 		return this.session;
 	}
-	
-	@Override
-	public String toString() {
-		String retval = functionName + "(";
-		if (parameters != null && parameters.length > 0) {
-			for (int i = 0; i < parameters.length; i++) {
-				if (i > 0) retval += ", ";
-				retval += parameters[i];
-			}
-		}
-		retval += ")";
-		return retval;
-	}
 }

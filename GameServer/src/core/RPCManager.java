@@ -36,6 +36,8 @@ public class RPCManager {
 			p.method = method;
 			
 			rpcs.put(rpcName, p);
+		} else {
+			throw new IllegalStateException("register rpc " + rpcName + " failed.");
 		}
 	}
 	
@@ -80,12 +82,13 @@ public class RPCManager {
 	}
 
 	public void start() {
+		// only one thread is handling the rpc.
 		Executors.defaultThreadFactory().newThread(new RPCHandler(this)).start();
 	}
 	
 	private class RPCHandler implements Runnable {
 		
-		private final int WAIT_TIME = 500;
+		private final int WAIT_TIME = 1000 * 2;
 		
 		private RPCManager manager;
 		
@@ -103,7 +106,7 @@ public class RPCManager {
 							manager.wait(WAIT_TIME);
 						}
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						// swallowed
 					}
 				} else {
 					invokeRPC(rpc);

@@ -34,9 +34,9 @@ public class ObjectSession extends Session {
 				rpc.setSession(this);
 				manager.add(rpc);
 				input.compact();
-//				synchronized(manager) {
-//					manager.notify();
-//				}
+				synchronized(manager) {
+					manager.notify();
+				}
 			} catch (EOFException e) {
 				input.reset();
 				break;
