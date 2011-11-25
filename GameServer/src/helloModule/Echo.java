@@ -1,7 +1,5 @@
 package helloModule;
 
-import java.lang.reflect.Method;
-
 import core.Context;
 import core.RPCManager;
 import core.Session;
@@ -9,23 +7,19 @@ import core.Session;
 public class Echo {
 
 	public void register() {
-		Class<?> clazz = Echo.class;
 		RPCManager manager = Context.instance().get(RPCManager.class);
-		
-		try {
-			Method echo = clazz.getMethod("echo", Session.class, String.class);
-			manager.registerRPC("echo", this, echo);
-		} catch (NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-		}
+		manager.registerRPC(this, "echo");
+		manager.registerRPC(this, "echoObject");
 	}
 	
 	public void echo(Session session, String client) {
 		String message = "Hello " + client + "!";
 
-		session.call("echo", message);
-		session.call("echo", message);
-		session.call("echoObject", new EchoName("client", "id"));
+		session.call("echo", client, 1);
+		session.call("echoObject", new EchoMessage(client, message));
 	}
 	
+	public void echoObject(Session session, EchoMessage message) {
+		session.call("echoObject", message);
+	}
 }

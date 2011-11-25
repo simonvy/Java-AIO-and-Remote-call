@@ -18,12 +18,25 @@ public class RPCManager {
 	
 	private ConcurrentLinkedQueue<RPC> rpcQueue = new ConcurrentLinkedQueue<>(); 
 	
-	public void registerRPC(String rpcName, Object host, Method method) {
-		Pair p = new Pair();
-		p.host = host;
-		p.method = method;
+	public void registerRPC(Object host, String rpcName) {
+		Method method = null;
 		
-		rpcs.put(rpcName, p);
+		if (host != null && rpcName != null && rpcName.length() > 0) {
+			for (Method m : host.getClass().getMethods()) {
+				if (m.getName().equals(rpcName)) {
+					method = m;
+					break;
+				}
+			}
+		}
+		
+		if (method != null) {
+			Pair p = new Pair();
+			p.host = host;
+			p.method = method;
+			
+			rpcs.put(rpcName, p);
+		}
 	}
 	
 	public void add(RPC rpc) {
