@@ -23,6 +23,7 @@ public final class Amf3Session extends Session {
 
 	@Override
 	protected void write(ByteBufferOutputStream output, Object object) throws IOException {
+		this.amf3Output.reset();
 		this.amf3Output.setOutputStream(output);
 		this.amf3Output.writeObject(object);
 		this.amf3Output.flush();
@@ -31,6 +32,7 @@ public final class Amf3Session extends Session {
 	@Override
 	protected void read(ByteBufferInputStream input) {
 		RPCManager manager = Context.instance().get(RPCManager.class);
+		this.amf3Input.reset();
 		this.amf3Input.setInputStream(input);
 		
 		while (true) {

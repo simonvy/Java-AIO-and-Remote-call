@@ -8,7 +8,6 @@ import core.Server;
 public final class Game {
 
 	public static void main(String[] args) {
-		Context.setup();
 		new Game().start();
 	}
 	
@@ -18,11 +17,11 @@ public final class Game {
 	public Game() {
 		this.server = Context.instance().register(Server.class);
 		this.rpcManager = Context.instance().register(RPCManager.class);
+		this.rpcManager.registerRPC(HelloWorld.class);
+		this.rpcManager.registerRPC(Echo.class);
 	}
 
 	public void start() {
-		this.rpcManager.registerRPC(HelloWorld.class);
-		this.rpcManager.registerRPC(Echo.class);
 		
 		this.server.init(6668);
 		this.server.start();

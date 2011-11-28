@@ -4,7 +4,9 @@ import java.io.Serializable;
 
 public class RPC implements Serializable {
 	
+	// set session to transient makes not be serialized by ObjectOutputStream.
 	private transient Session session;
+	
 	private String functionName;
 	private Object[] parameters;
 	
@@ -24,11 +26,12 @@ public class RPC implements Serializable {
 		return this.parameters;
 	}
 	
-	public void setSession(Session session) {
+	// set the read/write method of session to protected makes session not be serialized by Amf3Input.
+	protected void setSession(Session session) {
 		this.session = session;
 	}
 	
-	public Session getSession() {
+	protected Session getSession() {
 		return this.session;
 	}
 }
