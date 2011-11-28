@@ -1,6 +1,5 @@
 package core;
 
-import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,26 +21,23 @@ public final class Context {
 	}
 	
 	public <T> T register(Class<T> clazz) {
+		T host = null;
 		if (clazz != null) {
 			try {
-				Constructor<T> constructor = clazz.getConstructor();
-				T object = constructor.newInstance();
-				this.instances.put(clazz, object);
-				return object;
-			} catch (Exception e) {
-				e.printStackTrace();
-				assert false;
+				host = clazz.newInstance();
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new IllegalStateException(e);
 			}
+			this.instances.put(clazz, host);
 		}
-		return null;
+		return host;
 	}
 	
 	@SuppressWarnings("unchecked")
 	public <T> T get(Class<T> clazz) {
-		if (clazz != null && this.instances.containsKey(clazz)) {
-			return (T)this.instances.get(clazz);
+		if (clazz == null || !this.instances.containsKey(clazz)) {
+			throw new IllegalStateException("no instance is registered for class " + clazz);
 		}
-		assert false;
-		return null;
+		return (T)this.instances.get(clazz);
 	}
 }

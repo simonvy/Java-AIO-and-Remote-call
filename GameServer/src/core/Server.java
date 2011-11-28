@@ -37,15 +37,11 @@ public final class Server {
 					// swallowed.
 				}
 			}
-			System.err.println(e.getMessage());
-			return false;
+			throw new IllegalStateException(e);
 		}
 	}
 	
 	public void start() {
-		if (this.server == null) {
-			throw new IllegalStateException("channel is null");
-		}
 		this.accept();
 	}
 	
@@ -56,7 +52,7 @@ public final class Server {
 		try {
 			this.server.close();
 		} catch (IOException e) {
-			System.err.println(e.getMessage());
+			throw new IllegalStateException(e);
 		}
 	}
 	

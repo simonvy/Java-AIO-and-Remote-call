@@ -24,8 +24,8 @@ public class RPCManager {
 			RemoteCall rc = method.getAnnotation(RemoteCall.class);
 			if (rc != null) {
 				String rpcName = method.getName();
-				if (rc.alias() != null && rc.alias().length() > 0) {
-					rpcName = rc.alias();
+				if (rc.name() != null && rc.name().length() > 0) {
+					rpcName = rc.name();
 				}
 				// if method of the same name is already registered, throw an exception
 				if (rpcs.containsKey(rpcName)) {
