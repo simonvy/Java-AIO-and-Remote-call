@@ -22,9 +22,9 @@ public final class Amf3Session extends Session {
 	}
 
 	@Override
-	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+	protected void write(ByteBufferOutputStream output, Object object) throws IOException {
 		this.amf3Output.setOutputStream(output);
-		this.amf3Output.writeObject(rpc);
+		this.amf3Output.writeObject(object);
 		this.amf3Output.flush();
 	}
 	

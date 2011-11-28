@@ -40,14 +40,11 @@ public abstract class Session {
 		bbis.clear();
 	}
 	
-	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+	protected void write(ByteBufferOutputStream output, Object object) throws IOException {
 		// do nothing
 	}
 	
 	public void pendingRead() {
-		if (this.client == null) {
-			throw new IllegalStateException("the client is null");
-		}
 		if (this.client.isOpen()) {
 			this.client.read(input.getBuffer(), this, this.readHandler);
 		} else {
@@ -65,7 +62,7 @@ public abstract class Session {
 		
 		try {
 			synchronized (this.currentOutput) {
-				write(rpc, this.currentOutput);
+				write(this.currentOutput, rpc);
 			}
 		} catch (IOException e) {
 			System.err.println(e.getMessage());

@@ -16,9 +16,9 @@ public class ObjectSession extends Session {
 	}
 	
 	@Override
-	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+	protected void write(ByteBufferOutputStream output, Object object) throws IOException {
 		ObjectOutputStream stream = new ObjectOutputStream(output);
-		stream.writeObject(rpc);
+		stream.writeObject(object);
 		stream.flush();
 	}
 	

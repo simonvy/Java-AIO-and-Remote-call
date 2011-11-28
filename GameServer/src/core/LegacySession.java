@@ -20,7 +20,7 @@ public class LegacySession extends Session {
 	}
 
 	@Override
-	protected void write(RPC rpc, ByteBufferOutputStream output) throws IOException {
+	protected void write(ByteBufferOutputStream output, Object object) throws IOException {
 	}
 	
 	@Override
