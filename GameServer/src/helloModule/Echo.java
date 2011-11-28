@@ -17,4 +17,14 @@ public class Echo {
 	public void echoObject(Session session, EchoMessage message) {
 		session.call("echoObject", message);
 	}
+	
+	private int count = 0;
+	
+	@RemoteCall
+	public void doLoginNew(Session session, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
+		count ++;
+		if (count % 10000 == 0) {
+			System.out.println("doLoginNew " + count);
+		}
+	}
 }

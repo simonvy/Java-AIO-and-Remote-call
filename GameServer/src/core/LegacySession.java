@@ -27,7 +27,7 @@ public class LegacySession extends Session {
 	protected void read(ByteBufferInputStream input) {
 		RPCManager manager = Context.instance().get(RPCManager.class);
 		LegacyInputStream stream = new LegacyInputStream(input);
-		
+		//this.amf3Input = new Amf3Input(new SerializationContext());
 		this.amf3Input.setInputStream(stream);
 		
 		while (true) {
@@ -70,6 +70,7 @@ public class LegacySession extends Session {
 				break;
 			}
 		}
+		this.amf3Input.reset();
 	}
 	
 	private boolean checkRemoteObject(Object o) throws ClassNotFoundException {

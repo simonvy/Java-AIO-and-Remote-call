@@ -31,6 +31,11 @@ public class RPCManager {
 				if (rpcs.containsKey(rpcName)) {
 					throw new IllegalStateException("rpc [" + rpcName + "] is already registered.");
 				}
+				// check the argument type
+				Class<?>[] paramTypes = method.getParameterTypes();
+				if (paramTypes.length > 0 && !paramTypes[0].isAssignableFrom(Session.class)) {
+					throw new IllegalStateException("The parameter type of remote call " + method.getName() + " is incorrect.");
+				}
 				// constructor with no params is used to instance the rpc host.
 				if (host == null) {
 					try {
@@ -68,17 +73,37 @@ public class RPCManager {
 		
 		Pair p = this.rpcs.get(funcName);
 		try {
-			System.out.println("> remote call " + funcName + ".");
-			
+			//System.out.println("> remote call " + funcName + ".");
 			Session session = rpc.getSession();
+			Class<?>[] paramTypes = p.method.getParameterTypes();
 			
-			if (rpc.getParameters() != null && rpc.getParameters().length > 0) {
-				Object[] params = new Object[1 + rpc.getParameters().length];
-				params[0] = rpc.getSession();
-				System.arraycopy(rpc.getParameters(), 0, params, 1, params.length - 1);
-				p.method.invoke(p.host, params);
+			if (paramTypes.length == 0) {
+				p.method.invoke(p.host);
+			} else if (paramTypes.length == 1) {
+				p.method.invoke(p.host, session);
 			} else {
-				p.method.invoke(p.host, rpc.getSession());
+				Object[] params = rpc.getParameters();
+				if (params == null || params.length + 1 != paramTypes.length) {
+					System.err.println("> remote call " + funcName + " should have " + (paramTypes.length - 1) + " parameters.");
+				} else {
+					switch(paramTypes.length) {
+					case 2:
+						p.method.invoke(p.host, session, params[0]);
+						break;
+					case 3:
+						p.method.invoke(p.host, session, params[0], params[1]);
+						break;
+					case 4:
+						p.method.invoke(p.host, session, params[0], params[2], params[2]);
+						break;
+					default:
+						Object[] nparams = new Object[paramTypes.length];
+						nparams[0] = session;
+						System.arraycopy(params, 0, nparams, 1, params.length);
+						p.method.invoke(p.host, nparams);
+						break;
+					}
+				}
 			}
 			
 			session.flush();
