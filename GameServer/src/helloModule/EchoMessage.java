@@ -1,6 +1,8 @@
 package helloModule;
 
-public class EchoMessage {
+import java.io.Serializable;
+
+public class EchoMessage implements Serializable {
 
 	private String name;
 	private String message;

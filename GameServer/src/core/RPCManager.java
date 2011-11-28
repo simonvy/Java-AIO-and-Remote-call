@@ -18,27 +18,35 @@ public class RPCManager {
 	
 	private ConcurrentLinkedQueue<RPC> rpcQueue = new ConcurrentLinkedQueue<>(); 
 	
-	public void registerRPC(Object host, String rpcName) {
-		Method method = null;
-		
-		if (host != null && rpcName != null && rpcName.length() > 0) {
-			for (Method m : host.getClass().getMethods()) {
-				if (m.getName().equals(rpcName)) {
-					method = m;
-					break;
+	public <T> T registerRPC(Class<T> rpcClaz) {
+		T host = null;
+		for (Method method : rpcClaz.getMethods()) {
+			RemoteCall rc = method.getAnnotation(RemoteCall.class);
+			if (rc != null) {
+				String rpcName = method.getName();
+				if (rc.alias() != null && rc.alias().length() > 0) {
+					rpcName = rc.alias();
 				}
+				// if method of the same name is already registered, throw an exception
+				if (rpcs.containsKey(rpcName)) {
+					throw new IllegalStateException("rpc [" + rpcName + "] is already registered.");
+				}
+				// constructor with no params is used to instance the rpc host.
+				if (host == null) {
+					try {
+						host = rpcClaz.newInstance();
+					} catch (InstantiationException | IllegalAccessException e) {
+						throw new IllegalStateException(e);
+					}
+				}
+				
+				Pair p = new Pair();
+				p.host = host;
+				p.method = method;
+				rpcs.put(rpcName, p);
 			}
 		}
-		
-		if (method != null) {
-			Pair p = new Pair();
-			p.host = host;
-			p.method = method;
-			
-			rpcs.put(rpcName, p);
-		} else {
-			throw new IllegalStateException("register rpc " + rpcName + " failed.");
-		}
+		return host;
 	}
 	
 	public void add(RPC rpc) {

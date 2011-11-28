@@ -5,13 +5,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
 
 public class ObjectSession extends Session {
 
-	public ObjectSession(AsynchronousSocketChannel client,
-			CompletionHandler<Integer, Session> readHandler,
-			CompletionHandler<Integer, Session> writeHandler) {
+	public ObjectSession(AsynchronousSocketChannel client) {
 		super(client, null, null);
 	}
 	

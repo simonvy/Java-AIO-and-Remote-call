@@ -21,9 +21,8 @@ public final class Game {
 	}
 
 	public void start() {
-		new HelloWorld().register();
-		new Echo().register();
-		
+		this.rpcManager.registerRPC(HelloWorld.class);
+		this.rpcManager.registerRPC(Echo.class);
 		
 		this.server.init(6668);
 		this.server.start();

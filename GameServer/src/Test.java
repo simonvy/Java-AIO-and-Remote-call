@@ -37,7 +37,7 @@ public class Test {
 		ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
 		RPC rpc3 = (RPC) input.readObject();
 		
-		System.out.println(rpc3.toString());
+		//System.out.println(rpc3.toString());
 		
 		
 		
