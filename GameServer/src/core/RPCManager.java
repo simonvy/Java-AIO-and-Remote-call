@@ -86,6 +86,8 @@ public class RPCManager {
 				| InvocationTargetException e) {
 			System.err.println("> remote call function " + funcName + " generates error.");
 			System.err.println(e.getMessage());
+		} catch(Exception e) {
+			e.printStackTrace();
 		}
 	}
 
