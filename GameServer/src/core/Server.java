@@ -84,7 +84,7 @@ public final class Server {
 		public void completed(AsynchronousSocketChannel client, Server controller) {
 			controller.accept();
 			
-			Session session = new LegacySession(client);
+			Session session = new ObjectSession(client);
 			if (session.init()) {
 				System.out.println("> session connected.");
 				controller.registerSession(session);

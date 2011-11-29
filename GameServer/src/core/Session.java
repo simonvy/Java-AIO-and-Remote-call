@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class Session {
 
@@ -17,6 +18,7 @@ public abstract class Session {
 	private CompletionHandler<Integer, Session> writeHandler;
 	
 	private AtomicBoolean flushPending;
+	private ReentrantLock occupyLock;
 
 	protected Session(AsynchronousSocketChannel client, 
 			CompletionHandler<Integer, Session> readHandler,
@@ -25,6 +27,7 @@ public abstract class Session {
 		this.readHandler = readHandler != null ? readHandler : new DefaultReadHandler();
 		this.writeHandler = writeHandler != null ? writeHandler : new DefaultWriteHandler();
 		this.flushPending = new AtomicBoolean(false);
+		this.occupyLock = new ReentrantLock();
 	}
 	
 	public boolean init() {
@@ -145,5 +148,9 @@ public abstract class Session {
 			System.err.println(exc.getMessage());
 			session.close();
 		}
+	}
+	
+	public ReentrantLock getLock() {
+		return this.occupyLock;
 	}
 }

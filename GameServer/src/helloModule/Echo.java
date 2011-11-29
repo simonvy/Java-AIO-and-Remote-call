@@ -1,5 +1,7 @@
 package helloModule;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import core.RemoteCall;
 import core.Session;
 
@@ -18,13 +20,13 @@ public class Echo {
 		session.call("echoObject", message);
 	}
 	
-	private int count = 0;
+	private AtomicInteger count = new AtomicInteger(0);
 	
 	@RemoteCall
 	public void doLoginNew(Session session, Object p0, Object p1, Object p2, Object p3, Object p4, Object p5, Object p6) {
-		count ++;
-		if (count % 10000 == 0) {
-			System.out.println("doLoginNew " + count);
+		int c = count.addAndGet(1);
+		if (c % 10000 == 0) {
+			System.out.println("doLoginNew " + c);
 		}
 	}
 }

@@ -14,9 +14,13 @@ public class RPCManager {
 		Method method;
 	}
 	
-	private Map<String, Pair> rpcs = new HashMap<>();
+	private Map<String, Pair> knownRPCs;
+	private ConcurrentLinkedQueue<RPC> rpcQueue; 
 	
-	private ConcurrentLinkedQueue<RPC> rpcQueue = new ConcurrentLinkedQueue<>(); 
+	public RPCManager() {
+		this.knownRPCs = new HashMap<>();
+		this.rpcQueue = new ConcurrentLinkedQueue<>();
+	}
 	
 	public <T> T registerRPC(Class<T> rpcClaz) {
 		T host = null;
@@ -28,7 +32,7 @@ public class RPCManager {
 					rpcName = rc.name();
 				}
 				// if method of the same name is already registered, throw an exception
-				if (rpcs.containsKey(rpcName)) {
+				if (knownRPCs.containsKey(rpcName)) {
 					throw new IllegalStateException("rpc [" + rpcName + "] is already registered.");
 				}
 				// check the argument type
@@ -48,35 +52,20 @@ public class RPCManager {
 				Pair p = new Pair();
 				p.host = host;
 				p.method = method;
-				rpcs.put(rpcName, p);
+				knownRPCs.put(rpcName, p);
 			}
 		}
 		return host;
 	}
 	
-	public void add(RPC rpc) {
-		rpcQueue.offer(rpc);
-	}
-	
 	public void invokeRPC(RPC rpc) {
-		String funcName = rpc.getFunctionName();
+		String funcName = rpc.getFunctionName();		
+		Session session = rpc.getSession();
+		Pair p = this.knownRPCs.get(funcName);
+		Class<?>[] paramTypes = p.method.getParameterTypes();
 		
-		if (funcName == null || funcName.length() == 0) {
-			System.err.println("> remote call function name is empty");
-			return;
-		}
-		
-		if (!this.rpcs.containsKey(funcName)) {
-			System.err.println("> remote call function " + funcName + " is not registered");
-			return;
-		}
-		
-		Pair p = this.rpcs.get(funcName);
+		//System.out.println("> remote call " + funcName + ".");
 		try {
-			//System.out.println("> remote call " + funcName + ".");
-			Session session = rpc.getSession();
-			Class<?>[] paramTypes = p.method.getParameterTypes();
-			
 			if (paramTypes.length == 0) {
 				p.method.invoke(p.host);
 			} else if (paramTypes.length == 1) {
@@ -111,42 +100,58 @@ public class RPCManager {
 				| InvocationTargetException e) {
 			System.err.println("> remote call function " + funcName + " generates error.");
 			System.err.println(e.getMessage());
-		} catch(Exception e) {
-			e.printStackTrace();
 		}
+	}
+	
+	public void add(RPC rpc) {
+		String funcName = rpc.getFunctionName();
+		
+		if (funcName == null || funcName.length() == 0) {
+			System.err.println("> remote call function name is empty");
+			return;
+		}
+		
+		if (!this.knownRPCs.containsKey(funcName)) {
+			System.err.println("> remote call function " + funcName + " is not registered");
+			return;
+		}
+		
+		rpcQueue.offer(rpc);
 	}
 
 	public void start() {
-		// only one thread is handling the rpc.
-		Executors.defaultThreadFactory().newThread(new RPCHandler(this)).start();
-	}
-	
-	private class RPCHandler implements Runnable {
+		final RPCManager manager = this;
 		
-		private final int WAIT_TIME = 1000 * 2;
-		
-		private RPCManager manager;
-		
-		public RPCHandler(RPCManager manager) {
-			this.manager = manager;
-		}
-		
-		@Override
-		public void run() {
-			while (true) {
-				RPC rpc = rpcQueue.poll();
-				if (rpc == null) {
-					try {
-						synchronized(manager) {
-							manager.wait(WAIT_TIME);
+		Thread[] handlerThreads = new Thread[2];
+		for (int i = 0; i < handlerThreads.length; i++) {
+			handlerThreads[i] = Executors.defaultThreadFactory().newThread(new Runnable() {
+				@Override
+				public void run() {
+					while (true) {
+						RPC rpc = rpcQueue.poll();
+						if (rpc != null) {
+							Session session = rpc.getSession();
+							session.getLock().lock();
+							try {
+								invokeRPC(rpc);
+							} catch(Exception e) {
+								e.printStackTrace();
+							} finally {
+								session.getLock().unlock();
+							}
+						} else {
+							try {
+								synchronized(manager) {
+									manager.wait(500);
+								}
+							} catch (InterruptedException e) {
+								// swallowed
+							}
 						}
-					} catch (InterruptedException e) {
-						// swallowed
 					}
-				} else {
-					invokeRPC(rpc);
 				}
-			}
+			});
+			handlerThreads[i].start();
 		}
 	}
 }
