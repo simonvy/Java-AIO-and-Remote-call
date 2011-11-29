@@ -18,7 +18,7 @@ public class Test {
 		
 		OutputStream stream = socket.getOutputStream();
 		
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 10; i++) {
 			ObjectOutputStream output = new ObjectOutputStream(stream);
 			
 			RPC rpc = new RPC();
