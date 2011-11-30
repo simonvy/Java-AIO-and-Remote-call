@@ -13,9 +13,4 @@ public class HelloWorld {
 	public void helloWorld(Session session) {
 		System.out.println("" + count.addAndGet(1) + ": Hello World.");
 	}
-	
-	@RemoteCall
-	public void doLogin(Session session, String account, String password, Object version) {
-		session.call("switchCreate");
-	}
 }
