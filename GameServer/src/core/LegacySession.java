@@ -46,10 +46,11 @@ public class LegacySession extends Session {
 		
 		byte[] data = stream.toByteArray();
 		int dataSize = data.length - 4;
-		data[0] = (byte)((dataSize >> 24) & 0xFF);
-		data[1] = (byte)((dataSize >> 16) & 0xFF);
-		data[2] = (byte)((dataSize >> 8) & 0xFF);
-		data[3] = (byte)((dataSize >> 0) & 0xFF);
+		// little endian
+		data[0] = (byte)((dataSize >> 0) & 0xFF);
+		data[1] = (byte)((dataSize >> 8) & 0xFF);
+		data[2] = (byte)((dataSize >> 16) & 0xFF);
+		data[3] = (byte)((dataSize >> 24) & 0xFF);
 		
 		for (int i = 4; i < data.length; i++) {
 			data[i] = (byte)(data[i] ^ ((i - 4) % 7));
@@ -79,7 +80,7 @@ public class LegacySession extends Session {
 				
 				byte[] l = new byte[4];
 				input.read(l); //length of the package
-				int length = (l[0] << 24) + (l[1] << 16) + (l[2] << 8) + (l[3] << 0);
+				int length = (l[0] << 0) + (l[1] << 8) + (l[2] << 16) + (l[3] << 24);
 				
 				if (input.available() < length) {
 					break;

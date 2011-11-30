@@ -10,6 +10,8 @@ import flex.messaging.io.amf.Amf3Output;
 
 public final class Amf3Session extends Session {
 
+	// IMPORTANT: unless you understand the things about ENDIAN, 
+	// do not use readInt(), writeInt() and more such methods to Amf3Input and Amf3Output.
 	private Amf3Input amf3Input;
 	private Amf3Output amf3Output;
 	
