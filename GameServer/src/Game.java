@@ -1,5 +1,7 @@
 import helloModule.Echo;
 import helloModule.HelloWorld;
+import helloModule.Login;
+import helloModule.Util;
 import core.Context;
 import core.RPCManager;
 import core.Server;
@@ -17,8 +19,11 @@ public final class Game {
 	public Game() {
 		this.server = Context.instance().register(Server.class);
 		this.rpcManager = Context.instance().register(RPCManager.class);
+		
 		this.rpcManager.registerRPC(HelloWorld.class);
 		this.rpcManager.registerRPC(Echo.class);
+		this.rpcManager.registerRPC(Util.class);
+		this.rpcManager.registerRPC(Login.class);
 	}
 
 	public void start() {
