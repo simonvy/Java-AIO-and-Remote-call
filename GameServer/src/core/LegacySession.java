@@ -67,14 +67,23 @@ public class LegacySession extends Session {
 	protected void read(ByteBufferInputStream input) {
 		RPCManager manager = Context.instance().get(RPCManager.class);
 		LegacyInputStream stream = new LegacyInputStream(input);
-		//this.amf3Input = new Amf3Input(new SerializationContext());
 		this.amf3Input.setInputStream(stream);
 		
 		while (true) {
 			input.mark(0);
 			
 			try {
-				amf3Input.readInt(); // length of the package
+				if (input.available() <= 4) {
+					break;
+				}
+				
+				byte[] l = new byte[4];
+				input.read(l); //length of the package
+				int length = (l[0] << 24) + (l[1] << 16) + (l[2] << 8) + (l[3] << 0);
+				
+				if (input.available() < length) {
+					break;
+				}
 				
 				stream.startDecode();
 				amf3Input.readInt(); // garbage 0
@@ -103,6 +112,7 @@ public class LegacySession extends Session {
 				}
 			} catch (EOFException e) {
 				input.reset();
+				e.printStackTrace();
 				break;
 			} catch (ClassNotFoundException | IOException e) {
 				System.err.println(e.getMessage());
@@ -153,5 +163,4 @@ public class LegacySession extends Session {
 			return v;
 		}
 	}
-
 }

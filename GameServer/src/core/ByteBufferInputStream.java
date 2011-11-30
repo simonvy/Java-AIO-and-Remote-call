@@ -23,7 +23,7 @@ class ByteBufferInputStream extends InputStream {
 	@Override
 	public int read() throws IOException {
 		if (available() > 0) {
-			int retval = (int)this.buffer.get(position);
+			int retval = (int)this.buffer.get(position) & 0xFF;
 			position ++;
 			return retval;
 		}
