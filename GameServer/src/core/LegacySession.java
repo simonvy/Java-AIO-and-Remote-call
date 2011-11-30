@@ -1,5 +1,6 @@
 package core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,20 +8,59 @@ import java.nio.channels.AsynchronousSocketChannel;
 
 import flex.messaging.io.SerializationContext;
 import flex.messaging.io.amf.Amf3Input;
+import flex.messaging.io.amf.Amf3Output;
 
 public class LegacySession extends Session {
 
 	private Amf3Input amf3Input;
+	private Amf3Output amf3Output;
 	
 	public LegacySession(AsynchronousSocketChannel client) {
 		super(client, null, null);
 		
 		SerializationContext context = new SerializationContext();
 		this.amf3Input = new Amf3Input(context);
+		this.amf3Output = new Amf3Output(context);
 	}
 
 	@Override
-	protected void write(ByteBufferOutputStream output, Object object) throws IOException {
+	public void call(String funcName, Object...params) {
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		
+		this.amf3Output.setOutputStream(stream);
+		
+		Object[] p = new Object[3];
+		p[0] = 0; p[1] = funcName; p[2] = params != null ? params : new Object[0];
+		
+		try {
+			this.amf3Output.writeInt(0); // length, pre-set to 0, update later
+			this.amf3Output.writeInt(0); // client id
+			this.amf3Output.writeObject(p);
+			this.amf3Output.flush();
+			this.amf3Output.reset();
+		} catch (IOException e) {
+			e.printStackTrace(System.err);
+			this.close();
+			return;
+		}
+		
+		byte[] data = stream.toByteArray();
+		int dataSize = data.length - 4;
+		data[0] = (byte)((dataSize >> 24) & 0xFF);
+		data[1] = (byte)((dataSize >> 16) & 0xFF);
+		data[2] = (byte)((dataSize >> 8) & 0xFF);
+		data[3] = (byte)((dataSize >> 0) & 0xFF);
+		
+		for (int i = 4; i < data.length; i++) {
+			data[i] = (byte)(data[i] ^ ((i - 4) % 7));
+		}
+		
+		try {
+			super.getOutputStream().write(data);
+		} catch(IOException e) {
+			e.printStackTrace(System.err);
+			this.close();
+		}
 	}
 	
 	@Override

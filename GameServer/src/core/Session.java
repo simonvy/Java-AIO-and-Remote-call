@@ -10,7 +10,7 @@ public abstract class Session {
 
 	private AsynchronousSocketChannel client;
 	
-	private ByteBufferInputStream input;	
+	private ByteBufferInputStream input;
 	private ByteBufferOutputStream currentOutput;
 	private ByteBufferOutputStream backupOutput;
 	
@@ -64,20 +64,16 @@ public abstract class Session {
 		}
 		
 		try {
-			synchronized (this.currentOutput) {
-				write(this.currentOutput, rpc);
-			}
+			write(this.currentOutput, rpc);
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
 	}
 	
 	private void swap() {
-		synchronized(this.currentOutput) {
-			ByteBufferOutputStream temp = this.currentOutput;
-			this.currentOutput = this.backupOutput;
-			this.backupOutput = temp;
-		}
+		ByteBufferOutputStream temp = this.currentOutput;
+		this.currentOutput = this.backupOutput;
+		this.backupOutput = temp;
 	}
 	
 	public void flush() {
@@ -107,6 +103,18 @@ public abstract class Session {
 			}
 			System.out.println("> session closed.");
 		}
+	}
+	
+	public ReentrantLock getLock() {
+		return this.occupyLock;
+	}
+	
+	protected ByteBufferInputStream getInputStream() {
+		return this.input;
+	}
+	
+	protected ByteBufferOutputStream getOutputStream() {
+		return this.currentOutput;
 	}
 	
 	private static class DefaultReadHandler implements CompletionHandler<Integer, Session> {
@@ -148,9 +156,5 @@ public abstract class Session {
 			System.err.println(exc.getMessage());
 			session.close();
 		}
-	}
-	
-	public ReentrantLock getLock() {
-		return this.occupyLock;
 	}
 }
