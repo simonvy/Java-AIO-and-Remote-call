@@ -1,6 +1,8 @@
 package core;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.AsynchronousChannelGroup;
@@ -17,11 +19,20 @@ public final class Server {
 	private Set<Session> sessions = new HashSet<>();
 	
 	private int port;
+	private Constructor<? extends Session> sessionFactory;
 	private AsynchronousServerSocketChannel server;
-	private AcceptHandler acceptHandler = new AcceptHandler();
+	private AcceptHandler acceptHandler;
 	
-	public boolean init(int port) {
+	public boolean init(Class<? extends Session> sessionClass, int port) {
 		this.port = port;
+		this.acceptHandler = new AcceptHandler();
+		
+		try {
+			this.sessionFactory = sessionClass.getConstructor(AsynchronousSocketChannel.class);
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new IllegalStateException(e);
+		}
+		
 		try {
 			AsynchronousChannelGroup threadPool = AsynchronousChannelGroup.withFixedThreadPool(
 					MAX_THREAD_NUM, Executors.defaultThreadFactory());
@@ -84,7 +95,14 @@ public final class Server {
 		public void completed(AsynchronousSocketChannel client, Server controller) {
 			controller.accept();
 			
-			Session session = new LegacySession(client);
+			Session session = null;
+			try {
+				session = controller.sessionFactory.newInstance(client);
+			} catch (InstantiationException | IllegalAccessException
+					| IllegalArgumentException | InvocationTargetException e) {
+				throw new IllegalStateException(e);
+			}
+			
 			if (session.init()) {
 				System.out.println("> session connected.");
 				controller.registerSession(session);

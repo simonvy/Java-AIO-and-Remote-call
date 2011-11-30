@@ -1,6 +1,8 @@
 import helloModule.Echo;
 import helloModule.HelloWorld;
+import core.Client;
 import core.Context;
+import core.LegacySession;
 import core.RPCManager;
 import core.Server;
 
@@ -13,9 +15,11 @@ public final class Game {
 	
 	private Server server;
 	private RPCManager rpcManager;
+	private Client db;
 	
 	public Game() {
 		this.server = Context.instance().register(Server.class);
+		this.db = Context.instance().register(Client.class);
 		this.rpcManager = Context.instance().register(RPCManager.class);
 		this.rpcManager.registerRPC(HelloWorld.class);
 		this.rpcManager.registerRPC(Echo.class);
@@ -23,7 +27,9 @@ public final class Game {
 
 	public void start() {
 		
-		this.server.init(6668);
+		this.db.init(LegacySession.class, "localhost", 8890);
+		this.server.init(LegacySession.class, 6668);
+		this.db.start();
 		this.server.start();
 		this.rpcManager.start();
 		
@@ -37,6 +43,7 @@ public final class Game {
 			e.printStackTrace();
 		} finally {
 			this.server.stop();
+			this.db.stop();
 		}
 	}
 }

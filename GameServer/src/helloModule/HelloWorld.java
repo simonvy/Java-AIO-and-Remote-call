@@ -16,6 +16,8 @@ public class HelloWorld {
 	
 	@RemoteCall
 	public void doLogin(Session session, String account, String password, Object version) {
+		// do something in another process
+		// then back
 		session.call("switchCreate");
 	}
 }
