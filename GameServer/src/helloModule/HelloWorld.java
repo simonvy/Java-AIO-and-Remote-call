@@ -2,6 +2,9 @@ package helloModule;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.sun.security.ntlm.Client;
+
+import core.Context;
 import core.RemoteCall;
 import core.Session;
 
@@ -18,6 +21,7 @@ public class HelloWorld {
 	public void doLogin(Session session, String account, String password, Object version) {
 		// do something in another process
 		// then back
+		Context.instance().get(Client.class);
 		session.call("switchCreate");
 	}
 }
