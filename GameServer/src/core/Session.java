@@ -20,6 +20,10 @@ public abstract class Session {
 	private AtomicBoolean flushPending;
 	private ReentrantLock occupyLock;
 
+	protected Session(AsynchronousSocketChannel client) {
+		this(client, null, null);
+	}
+	
 	protected Session(AsynchronousSocketChannel client, 
 			CompletionHandler<Integer, Session> readHandler,
 			CompletionHandler<Integer, Session> writeHandler) {
