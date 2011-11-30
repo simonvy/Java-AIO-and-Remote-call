@@ -21,7 +21,8 @@ public class HelloWorld {
 	public void doLogin(Session session, String account, String password, Object version) {
 		// do something in another process
 		// then back
-		Context.instance().get(Client.class);
+		Client client = Context.instance().get("db");
+		
 		session.call("switchCreate");
 	}
 }

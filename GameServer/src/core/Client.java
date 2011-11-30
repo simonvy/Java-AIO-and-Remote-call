@@ -59,4 +59,8 @@ public final class Client {
 	public void stop() {
 		session.close();
 	}
+	
+	public Session getSession() {
+		return this.session;
+	}
 }
