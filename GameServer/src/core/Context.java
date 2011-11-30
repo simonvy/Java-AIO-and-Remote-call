@@ -11,29 +11,40 @@ public final class Context {
 		return singleton;
 	}
 	
-	private Map<Class<?>, Object> instances = new IdentityHashMap<>();
+	private Map<String, Object> instances = new IdentityHashMap<>();
 	
 	private Context() {
 	}
 	
 	public <T> T register(Class<T> clazz) {
+		return register(clazz.getName(), clazz);
+	}
+	
+	public <T> T register(String name, Class<T> clazz) {
 		T host = null;
 		if (clazz != null) {
+			if (this.instances.containsKey(name)) {
+				throw new IllegalStateException(name + " is already in the context.");
+			}
 			try {
 				host = clazz.newInstance();
 			} catch (InstantiationException | IllegalAccessException e) {
 				throw new IllegalStateException(e);
 			}
-			this.instances.put(clazz, host);
+			this.instances.put(name, host);
 		}
 		return host;
 	}
+
+	public <T> T get(Class<T> clazz) {
+		return get(clazz.getName());
+	}
 	
 	@SuppressWarnings("unchecked")
-	public <T> T get(Class<T> clazz) {
-		if (clazz == null || !this.instances.containsKey(clazz)) {
-			throw new IllegalStateException("no instance is registered for class " + clazz);
+	public <T> T get(String name) {
+		if (!this.instances.containsKey(name)) {
+			throw new IllegalStateException("no instance is registered for " + name);
 		}
-		return (T)this.instances.get(clazz);
+		return (T)this.instances.get(name); 
 	}
 }
