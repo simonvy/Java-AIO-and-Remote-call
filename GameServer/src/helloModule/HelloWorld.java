@@ -15,16 +15,16 @@ public class HelloWorld {
 		System.out.println("" + count.addAndGet(1) + ": Hello World.");
 	}
 	
-	@RemoteCall
-	public void doLogin(Session session, String account, String password, Object version) {
-		// do something in another process
-		// then back
-		Client client = Context.instance().get("db");
-		Session dbSession = client.getSession();
-		
-		dbSession.call("loginDBNew", account, version, 0, "", "", 0 /*client id*/);
-		dbSession.flush();
-		
-		session.call("switchCreate");
-	}
+//	@RemoteCall
+//	public void doLogin(Session session, String account, String password, Object version) {
+//		// do something in another process
+//		// then back
+//		Client client = Context.instance().get("db");
+//		Session dbSession = client.getSession();
+//		
+//		dbSession.call("loginDBNew", account, version, 0, "", "", 0 /*client id*/);
+//		dbSession.flush();
+//		
+//		session.call("switchCreate");
+//	}
 }

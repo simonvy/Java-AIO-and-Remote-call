@@ -1,16 +1,25 @@
 package helloModule;
 
+import core.Client;
+import core.Context;
 import core.RemoteCall;
 import core.Session;
 
 public class Login {
 	
-//	@RemoteCall
-//	public void doLogin(Session session, String account, String pwd, Object version) {
-//		account = account.toLowerCase().trim();
-//		// check already login?
-//		session.call("switchCreate");
-//	}
+	
+	
+	
+	@RemoteCall
+	public void doLogin(Session session, String account, String password, Object version) {
+		Client client = Context.instance().get("db");
+		Session dbSession = client.getSession();
+		
+		dbSession.call("loginDBNew", account, version, 0, "", "", 0 /*client id*/);
+		dbSession.flush();
+		
+		session.call("switchCreate");
+	}
 	
 	@RemoteCall
 	public void createCharacter(Session session, String name, int heroTid, int roleType) {
