@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class Session {
 
+	private int id;
 	private AsynchronousSocketChannel client;
 	
 	private ByteBufferInputStream input;
@@ -111,6 +112,14 @@ public abstract class Session {
 	
 	public ReentrantLock getLock() {
 		return this.occupyLock;
+	}
+	
+	public int getId() {
+		return this.id;
+	}
+	
+	public void setId(int id) {
+		this.id = id;
 	}
 	
 	protected ByteBufferInputStream getInputStream() {
