@@ -17,11 +17,11 @@ public final class Game {
 	
 	private Server server;
 	private RPCManager rpcManager;
-//	private Client db;
+	private Client db;
 	
 	public Game() {
 		this.server = Context.instance().register(Server.class);
-//		this.db = Context.instance().register("db", Client.class);
+		this.db = Context.instance().register("db", Client.class);
 		
 		this.rpcManager = Context.instance().register(RPCManager.class);
 		
@@ -33,8 +33,8 @@ public final class Game {
 
 	public void start() {
 		
-//		this.db.init(LegacySession.class, "localhost", 8890);
-//		this.db.start();
+		this.db.init(LegacySession.class, "localhost", 8890);
+		this.db.start();
 		
 		this.server.init(LegacySession.class, 6668);
 		this.server.start();
@@ -50,7 +50,7 @@ public final class Game {
 			e.printStackTrace();
 		} finally {
 			this.server.stop();
-//			this.db.stop();
+			this.db.stop();
 		}
 	}
 }

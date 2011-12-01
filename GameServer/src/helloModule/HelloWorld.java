@@ -1,9 +1,7 @@
 package helloModule;
 
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.sun.security.ntlm.Client;
-
+import core.Client;
 import core.Context;
 import core.RemoteCall;
 import core.Session;
@@ -22,6 +20,10 @@ public class HelloWorld {
 		// do something in another process
 		// then back
 		Client client = Context.instance().get("db");
+		Session dbSession = client.getSession();
+		
+		dbSession.call("loginDBNew", account, version, 0, "", "", 0 /*client id*/);
+		dbSession.flush();
 		
 		session.call("switchCreate");
 	}
