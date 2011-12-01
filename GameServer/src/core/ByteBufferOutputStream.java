@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class ByteBufferOutputStream extends OutputStream {
 
 	private AtomicBoolean locked;
-	private final int DEFAULT_BUFFER_SIZE = 10 * 1024;
+	private final int DEFAULT_BUFFER_SIZE = 100 * 1024;
 	//private final int DEFAULT_COMPACT_SIZE = 1 * 1024;
 	
 	private ByteBuffer buffer;

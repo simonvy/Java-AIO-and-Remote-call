@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 
 class ByteBufferInputStream extends InputStream {
 	
-	private final int DEFAULT_BUFFER_SIZE = 10 * 1024;
-	private final int DEFAULT_COMPACT_SIZE = 1 * 1024;
+	private final int DEFAULT_BUFFER_SIZE = 150 * 1024;
+	private final int DEFAULT_COMPACT_SIZE = 50 * 1024;
 	
 	private ByteBuffer buffer;
 	

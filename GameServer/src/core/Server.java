@@ -96,6 +96,13 @@ public final class Server {
 		}
 	}
 	
+	public Session getSessionById(int id) {
+		if (this.sessions.containsKey(id)) {
+			return this.sessions.get(id);
+		}
+		return null;
+	}
+	
 	private class AcceptHandler implements CompletionHandler<AsynchronousSocketChannel, Server> {
 
 		@Override

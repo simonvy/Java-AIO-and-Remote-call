@@ -83,7 +83,7 @@ public class RPCManager {
 						p.method.invoke(p.host, session, params[0], params[1]);
 						break;
 					case 4:
-						p.method.invoke(p.host, session, params[0], params[2], params[2]);
+						p.method.invoke(p.host, session, params[0], params[1], params[2]);
 						break;
 					default:
 						Object[] nparams = new Object[paramTypes.length];
