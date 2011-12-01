@@ -9,14 +9,16 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Server {
 	private final int MAX_THREAD_NUM = 1 + 2;
 	
-	private Set<Session> sessions = new HashSet<>();
+	private AtomicInteger nextSessionId = new AtomicInteger();
+	private Map<Integer, Session> sessions = new HashMap<>();
 	
 	private int port;
 	private Constructor<? extends Session> sessionFactory;
@@ -57,7 +59,7 @@ public final class Server {
 	}
 	
 	public void stop() {
-		for (Session session : sessions) {
+		for (Session session : sessions.values()) {
 			session.close();
 		}
 		try {
@@ -75,16 +77,21 @@ public final class Server {
 	
 	public void registerSession(Session session) {
 		if (session != null) {
+			int id = this.nextSessionId.addAndGet(1);
+			session.setId(id);
 			synchronized(this.sessions) {
-				this.sessions.add(session);
+				this.sessions.put(id, session);
 			}
 		}
 	}
 	
 	public void removeSession(Session session) {
-		if (session != null && this.sessions.contains(session)) {
-			synchronized(this.sessions) {
-				this.sessions.remove(session);
+		if (session != null) {
+			int id = session.getId();
+			if (this.sessions.containsKey(id)) {
+				synchronized(this.sessions) {
+					this.sessions.remove(id);
+				}
 			}
 		}
 	}
