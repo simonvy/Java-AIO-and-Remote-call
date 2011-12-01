@@ -46,7 +46,13 @@ public final class Client {
 						| IllegalArgumentException | InvocationTargetException e) {
 					throw new IllegalStateException(e);
 				}
-				session.pendingRead();
+				
+				if (session.init()) {
+					System.out.println("> client session connected.");
+					session.pendingRead();
+				} else {
+					System.out.println("> session initialize failed.");
+				}
 			}
 
 			@Override
